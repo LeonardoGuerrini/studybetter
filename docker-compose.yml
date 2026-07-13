@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: studybetter-db
+    environment:
+      POSTGRES_USER: studybetter
+      POSTGRES_PASSWORD: studybetter
+      POSTGRES_DB: studybetter
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studybetter"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    profiles: ["full"]
+    environment:
+      DATABASE_URL: postgresql://studybetter:studybetter@db:5432/studybetter
+      # Postgres embutido não tem pooler: DIRECT_URL (usada pelo migrate deploy) = DATABASE_URL.
+      DIRECT_URL: postgresql://studybetter:studybetter@db:5432/studybetter
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-in-production-0000}
+      WEB_ORIGIN: http://localhost:3000
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3001/api
+    profiles: ["full"]
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  db-data:

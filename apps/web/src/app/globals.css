@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/* ── Design tokens "Papel" ─────────────────────────────────────────────────
+   Direção editorial: base clara cor de papel (ou carvão quente no dark),
+   accent terracota, títulos/números serifados (Newsreader), UI em Hanken
+   Grotesk e timers/labels em Space Mono. As variáveis --sb-* trocam com o tema
+   (escuro = padrão em :root; claro em html.light). O bloco @theme inline expõe
+   cada token como utilitário Tailwind (bg-bg, bg-surface, text-ink, bg-track,
+   text-accent-text, border-border, etc.) mantendo a referência à variável em
+   runtime (por isso `inline`). */
+@theme {
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+}
+
+@theme inline {
+  --color-bg: var(--sb-bg);
+  --color-surface: var(--sb-surface);
+  --color-raised: var(--sb-raised);
+  --color-border: var(--sb-border);
+  --color-border-strong: var(--sb-border-strong);
+  --color-track: var(--sb-track);
+  --color-ink: var(--sb-ink);
+  --color-ink-secondary: var(--sb-ink-secondary);
+  --color-muted: var(--sb-muted);
+  --color-faint: var(--sb-faint);
+  --color-accent: var(--sb-accent);
+  --color-accent-ink: var(--sb-accent-ink);
+  --color-accent-soft: var(--sb-accent-soft);
+  --color-accent-text: var(--sb-accent-text);
+  --color-danger: var(--sb-danger);
+}
+
+/* Tema escuro (padrão) — carvão quente */
+:root {
+  --sb-bg: #16130e;
+  --sb-surface: #1e1a14;
+  --sb-raised: #26201a;
+  --sb-border: #322b21;
+  --sb-border-strong: #3a3227;
+  --sb-track: #2e2820;
+  --sb-ink: #efe7d8;
+  --sb-ink-secondary: #c6bca9;
+  --sb-muted: #948875;
+  --sb-faint: #6b6152;
+  --sb-accent: #ce7048;
+  --sb-accent-ink: #16130e;
+  --sb-accent-soft: rgba(206, 112, 72, 0.15);
+  --sb-accent-text: #e08a5e;
+  --sb-danger: #e0685c;
+}
+
+/* Tema claro — papel */
+html.light {
+  --sb-bg: #efeae0;
+  --sb-surface: #fbf8f1;
+  --sb-raised: #ebe5d8;
+  --sb-border: #e0d8c8;
+  --sb-border-strong: #ded5c3;
+  --sb-track: #eae2d2;
+  --sb-ink: #201c15;
+  --sb-ink-secondary: #5b5348;
+  --sb-muted: #8a8073;
+  --sb-faint: #a99e8c;
+  --sb-accent: #b4552d;
+  --sb-accent-ink: #fbf8f1;
+  --sb-accent-soft: rgba(180, 85, 45, 0.12);
+  --sb-accent-text: #b4552d;
+  --sb-danger: #e0685c;
+}
+
+html {
+  color-scheme: dark;
+}
+html.light {
+  color-scheme: light;
+}

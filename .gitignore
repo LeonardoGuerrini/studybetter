@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.next/
+dist/
+.pgdata/
+*.log
+.DS_Store
+
+# Config local de ferramentas (contém o project_ref do Supabase) — fora do repo.
+.mcp.json

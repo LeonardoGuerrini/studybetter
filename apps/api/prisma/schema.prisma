@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Runtime da API: usar o pooler (Supavisor, porta 6543) em produção.
+  url       = env("DATABASE_URL")
+  // Migrações (prisma migrate): conexão direta (porta 5432). Em dev local
+  // (Postgres embutido, sem pooler) DIRECT_URL = DATABASE_URL.
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subjects Subject[]
+  sessions StudySession[]
+  cycles   StudyCycle[]
+
+  @@map("users")
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  color     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions   StudySession[]
+  cycleItems CycleItem[]
+
+  @@unique([userId, name])
+  @@map("subjects")
+}
+
+enum SessionStatus {
+  RUNNING
+  PAUSED
+  FINISHED
+}
+
+enum StudyMethod {
+  PDF
+  QUESTIONS
+  VIDEO
+  PDF_QUESTIONS
+  REVIEW
+  MIND_MAP
+  FLASH_CARDS
+}
+
+enum StudyPeriod {
+  MORNING
+  AFTERNOON
+  EVENING
+  DAWN
+}
+
+model StudySession {
+  id                 String        @id @default(cuid())
+  userId             String
+  subjectId          String
+  status             SessionStatus @default(RUNNING)
+  startedAt          DateTime      @default(now())
+  endedAt            DateTime?
+  durationMinutes    Int?
+  accumulatedSeconds Int           @default(0)
+  lastResumedAt      DateTime?
+  notes              String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  studyMethod    StudyMethod?
+  studyPeriod    StudyPeriod?
+  studyDate      DateTime?
+  questionsCount Int?
+  correctCount   Int?
+  pagesStudied   Int?
+
+  cycleId String?
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  cycle   StudyCycle? @relation(fields: [cycleId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([userId, endedAt])
+  @@index([userId, startedAt])
+  @@index([cycleId, status])
+  @@index([subjectId])
+  @@map("study_sessions")
+}
+
+model StudyCycle {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  currentPosition Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items    CycleItem[]
+  sessions StudySession[]
+  rounds   CycleRoundArchive[]
+
+  @@index([userId, isActive])
+  @@map("study_cycles")
+}
+
+model CycleItem {
+  id             String   @id @default(cuid())
+  cycleId        String
+  subjectId      String
+  position       Int
+  plannedMinutes Int
+  weight         Int
+  knowledgeLevel Int
+  priorityScore  Int
+  isActive       Boolean  @default(true)
+  roundStartedAt DateTime @default(now())
+
+  cycle   StudyCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  subject Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([cycleId, position])
+  @@index([subjectId])
+  @@map("cycle_items")
+}
+
+enum CycleRoundKind {
+  CYCLE_RESET
+  SUBJECT_SAVE
+}
+
+model CycleRoundArchive {
+  id             String         @id @default(cuid())
+  cycleId        String
+  subjectId      String?
+  subjectName    String
+  studiedSeconds Int
+  kind           CycleRoundKind
+  archivedAt     DateTime       @default(now())
+
+  cycle StudyCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  @@index([cycleId])
+  @@map("cycle_round_archives")
+}
