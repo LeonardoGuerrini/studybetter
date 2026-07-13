@@ -135,4 +135,12 @@ export interface StudySessionRepository {
   sumStudiedSecondsForCycleRound(
     cycleId: string,
   ): Promise<CycleSubjectSeconds[]>;
+  /**
+   * Igual ao anterior, mas resolve o ciclo ativo do usuário dentro da própria
+   * query (sem depender do cycleId em JS) — permite rodar em paralelo com
+   * `findActiveByUser`, poupando um round-trip sequencial ao banco.
+   */
+  sumStudiedSecondsForActiveCycleRound(
+    userId: string,
+  ): Promise<CycleSubjectSeconds[]>;
 }

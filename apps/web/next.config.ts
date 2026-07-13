@@ -14,6 +14,16 @@ const API_ORIGIN =
   process.env.API_ORIGIN ?? "https://studybetter-th4k.onrender.com";
 
 const nextConfig: NextConfig = {
+  // Router Cache do cliente: reaproveita o RSC de rotas dinâmicas já visitadas
+  // por 30s → revisitar uma tela (ex.: Dashboard → Estudar → Dashboard) fica
+  // instantâneo, sem refazer o round-trip SSR→API→banco. As mutações continuam
+  // chamando router.refresh(), que invalida o cache quando os dados mudam.
+  experimental: {
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
   async rewrites() {
     return [
       {

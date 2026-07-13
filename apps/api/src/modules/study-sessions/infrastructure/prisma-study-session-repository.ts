@@ -172,4 +172,23 @@ export class PrismaStudySessionRepository implements StudySessionRepository {
       GROUP BY s."subjectId"
     `;
   }
+
+  async sumStudiedSecondsForActiveCycleRound(
+    userId: string,
+  ): Promise<CycleSubjectSeconds[]> {
+    // Resolve o ciclo ativo dentro da query (join em study_cycles), então não
+    // depende do cycleId vindo do JS → roda em paralelo com findActiveByUser.
+    return prisma.$queryRaw<CycleSubjectSeconds[]>`
+      SELECT s."subjectId" AS "subjectId",
+             COALESCE(SUM(s."accumulatedSeconds"), 0)::int AS seconds
+      FROM study_sessions s
+      JOIN study_cycles c
+        ON c.id = s."cycleId" AND c."userId" = ${userId} AND c."isActive" = true
+      JOIN cycle_items ci
+        ON ci."cycleId" = s."cycleId" AND ci."subjectId" = s."subjectId"
+      WHERE s.status = 'FINISHED'
+        AND s."endedAt" >= ci."roundStartedAt"
+      GROUP BY s."subjectId"
+    `;
+  }
 }

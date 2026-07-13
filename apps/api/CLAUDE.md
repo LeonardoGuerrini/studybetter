@@ -368,3 +368,9 @@ next-active-position, round-progress, calculate-streak). Use cases/controllers/r
   - **`resolveManyByName`**: guard explícito no `save-cycle` se uma matéria não resolver (era `!`).
   - Verificado: typecheck, 39 testes, e smoke test (429 no rate limit; 422 no netMinutes absurdo; um
     201 + um 409 em starts concorrentes; headers do helmet presentes).
+- **Perf: get-active-cycle em paralelo** — `GetActiveCycleUseCase` fazia `findActiveByUser` e depois
+  `sumStudiedSecondsForCycleRound(cycle.id)` em **série** (2 RTT ao banco). Nova query
+  `sumStudiedSecondsForActiveCycleRound(userId)` resolve o ciclo ativo dentro do próprio SQL (join em
+  `study_cycles`), permitindo rodar as duas leituras em `Promise.all` (~1 RTT). Relevante enquanto API
+  (Render/Ohio) e banco (Supabase/SP) estiverem distantes — cada round-trip custa ~120ms. `/dashboard` e
+  `/study` (que chamam este caso de uso) ficam mais rápidos. Sem mudança de comportamento.

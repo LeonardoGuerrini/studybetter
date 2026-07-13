@@ -59,6 +59,9 @@ navegador. Como `NEXT_PUBLIC_*` é inlined em build, o valor entra por env de bu
 - **`(app)/error.tsx`** (`"use client"`): error boundary das rotas autenticadas — cobre falha/timeout do
   fetch server-side (`api-server.ts`); mostra mensagem + botão "tentar de novo" (`reset()`). O redirect de
   401 não cai aqui (é navegação, não erro).
+- **`(app)/loading.tsx`**: fallback de Suspense da navegação (reusa `PageLoader`). Com as páginas em SSR
+  dinâmico, faz a tela nova aparecer **na hora** enquanto o Server Component busca — em vez de a tela
+  antiga ficar congelada esperando o round-trip até a API/banco.
 - **Grupo `(auth)`** (público, sem layout próprio): `/login`, `/register`.
 - **Grupo `(app)`** (protegido, com `layout.tsx` de guarda + **rail lateral de 72px**): `/dashboard`,
   `/study`, `/cycles`, `/cycles/[id]`.
@@ -370,3 +373,11 @@ npm run typecheck -w apps/web
   do Render não pendura o server-render) e o `cycles/[id]` passou a `encodeURIComponent(id)` no path. Novo
   `app/(app)/error.tsx` (boundary com "tentar de novo") cobre falha/timeout do fetch server-side. Parte
   do lote de segurança/precisão (backend: fuso Brasília, bounds anti-overflow, rate limiting, sessão única).
+- **Percepção de navegação (SSR bloqueante)** — com as rotas em `ƒ Dynamic`, a navegação "congelava" na
+  tela antiga por ~1–2s esperando o SSR (API em Ohio + banco em SP = round-trip intercontinental por
+  query). Correções: **`app/(app)/loading.tsx`** (skeleton instantâneo via Suspense → a tela nova aparece
+  na hora) e **`experimental.staleTimes`** no `next.config.ts` (`dynamic: 30`, `static: 180`) → revisitar
+  telas usa o Router Cache do cliente, sem refazer o round-trip. **Não** cacheamos no servidor
+  (`api-server` segue `no-store`): o fetch encaminha o cookie por-usuário e o data cache do Next não
+  chaveia por cookie — cachear vazaria dados entre usuários. O ganho real de latência do backend vem da
+  **co-localização** de API e banco (ver `apps/api/CLAUDE.md`).
